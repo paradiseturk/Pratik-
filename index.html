@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التركية للحياة الواقعية والتدريب الصوتي</title>
+    <!-- تضمين Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* خط متناسق مع اللغة العربية ومناسب للواجهات الحديثة */
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f7f9fb; /* خلفية أفتح */
+            line-height: 1.6;
+        }
+
+        /* تنسيق خاص للكلمات التركية لتبدو مميزة */
+        .turkish-text {
+            font-family: 'Inter', sans-serif;
+            direction: ltr;
+            font-weight: 700;
+            color: #4338ca; /* بنفسجي أعمق (Indigo 700) */
+        }
+        
+        /* تأثير التمرير على البطاقات */
+        .card-hover:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(79, 70, 229, 0.15); /* ظل بنفسجي خفيف */
+        }
+        
+        /* تنسيق أزرار التنقل النشطة */
+        .nav-active {
+            color: #4c1d95; /* بنفسجي غامق جداً */
+            border-right: 4px solid #8b5cf6; /* خط جانبي بنفجسي لامع */
+            font-weight: 700;
+            background-color: #f5f3ff;
+        }
+
+        /* تنسيق أزرار التبويبات (Tabs) */
+        .tab-btn {
+            transition: all 0.3s;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        .tab-active {
+            background-color: #ffffff;
+            border-bottom: 3px solid #6d28d9; /* خط بنفسجي تحت التبويب النشط */
+            color: #6d28d9;
+            font-weight: 700;
+        }
+        
+        .option-button.correct { background-color: #d1fae5; border-color: #10b981; }
+        .option-button.wrong { background-color: #fee2e2; border-color: #ef4444; }
+
+        .tts-icon {
+            cursor: pointer;
+            transition: color 0.2s, transform 0.1s;
+        }
+        .tts-icon:hover {
+            color: #4c1d95; 
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <!-- رسالة التحميل الصوتي -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-xl shadow-2xl flex items-center border-t-4 border-violet-600">
+            <svg class="animate-spin -ml-1 mr-3 h-6 w-6 text-violet-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-gray-700 font-semibold">جاري توليد الصوت... (قد يستغرق بضع ثوان)</span>
+        </div>
+    </div>
+    
+    <!-- الحاوية الرئيسية للتطبيق -->
+    <div class="max-w-6xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden card">
+        
+        <!-- الرأس والعنوان - باللون البنفسجي الغامق -->
+        <header class="bg-gradient-to-r from-violet-800 to-indigo-800 p-6 shadow-xl">
+            <h1 class="text-3xl font-bold text-white text-center">التركية للحياة الواقعية <span class="text-yellow-300">بالصوت</span></h1>
+            <p class="text-sm text-violet-200 text-center mt-1">تدريب عملي على المحادثات اليومية والنطق الصحيح</p>
+        </header>
+
+        <!-- جسم التطبيق: شريط التنقل والمحتوى -->
+        <div class="flex flex-col lg:flex-row min-h-[75vh]">
+            
+            <!-- شريط التنقل الجانبي/العلوي -->
+            <nav id="navigation" class="lg:w-1/4 p-4 border-b lg:border-b-0 lg:border-r bg-gray-50 flex flex-col space-y-2">
+                <button onclick="showModule('home')" class="nav-btn p-3 text-lg text-right rounded-lg hover:bg-gray-200 transition duration-150 nav-active">
+                    الرئيسية
+                </button>
+                <button onclick="showModule('M1')" class="nav-btn p-3 text-lg text-right rounded-lg hover:bg-gray-200 transition duration-150">
+                    <span class="text-violet-600">الوحدة 1:</span> التحية والتعارف
+                </button>
+                <button onclick="showModule('M2')" class="nav-btn p-3 text-lg text-right rounded-lg hover:bg-gray-200 transition duration-150">
+                    <span class="text-violet-600">الوحدة 2:</span> العائلة والروتين
+                </button>
+                <button onclick="showModule('M3')" class="nav-btn p-3 text-lg text-right rounded-lg hover:bg-gray-200 transition duration-150">
+                    <span class="text-violet-600">الوحدة 3:</span> التسوق والطعام
+                </button>
+                <button onclick="showModule('M4')" class="nav-btn p-3 text-lg text-right rounded-lg hover:bg-gray-200 transition duration-150">
+                    <span class="text-violet-600">الوحدة 4:</span> الصحة والطوارئ
+                </button>
+                <button onclick="showModule('M5')" class="nav-btn p-3 text-lg text-right rounded-lg hover:bg-gray-200 transition duration-150">
+                    <span class="text-violet-600">الوحدة 5:</span> الاتجاهات والتنقل
+                </button>
+            </nav>
+
+            <!-- منطقة المحتوى الرئيسية -->
+            <main id="content-area" class="lg:w-3/4 p-6 bg-white overflow-y-auto">
+                <!-- المحتوى يتم تحميله بواسطة JavaScript -->
+            </main>
+        </div>
+    </div>
+
+    <!-- JavaScript - إدارة حالة التطبيق، TTS، والمحتوى -->
+    <script>
+        // === بيانات المحتوى (Modules & Quizzes) ===
+        const modules = {
+            'M1': {
+                title: 'الوحدة 1: التحية والتعارف',
+                keywords: [
+                    { tr: 'Merhaba!', ar: 'أهلاً!' },
+                    { tr: 'Günaydın.', ar: 'صباح الخير.' },
+                    { tr: 'İyiyim, teşekkürler.', ar: 'أنا بخير، شكراً.' },
+                    { tr: 'Adınız ne?', ar: 'ما اسمك؟' },
+                    { tr: 'Nerelisiniz?', ar: 'من أين أنت؟' },
+                    { tr: 'Memnun oldum.', ar: 'تشرفت بمعرفتك.' },
+                ],
+                // قسم جديد لنصائح الحياة الواقعية والثقافة
+                realLifeTips: [
+                    { title: 'الرسمي مقابل غير الرسمي', content: 'استخدم "Adınız ne?" (بلاحقة -nız الرسمية) مع كبار السن وفي بيئة العمل. استخدم "Adın ne?" (بلاحقة -n غير الرسمية) مع الأصدقاء والأطفال.' },
+                    { title: 'بروتوكول "Memnun oldum"', content: 'يُقال "Memnun oldum" (تشرفت بمعرفتك) بعد تبادل الأسماء. الرد الشائع والأكثر تهذيباً هو "Ben de memnun oldum" (أنا أيضاً تشرفت).' },
+                    { title: 'وداع المغادر والباقي', content: 'عبارة "Güle güle" (اذهب بسلام) تُقال دائماً من الشخص الباقي إلى الشخص المغادر. أما المغادر فيقول "Hoşça kal" (ابقَ سعيداً).' },
+                ],
+                conversation: [
+                    { speaker: 'A', ar: 'صباح الخير، ما اسمك؟', tr: 'Günaydın, adın ne?' },
+                    { speaker: 'B', ar: 'صباح الخير. اسمي أحمد. تشرفت بك.', tr: 'Günaydın. Adım Ahmet. Memnun oldum.' },
+                    { speaker: 'A', ar: 'من أين أنت يا أحمد؟', tr: 'Ahmet, nerelisiniz?' },
+                    { speaker: 'B', ar: 'أنا من سوريا، وأنت؟', tr: 'Ben Suriyeliyim, ya siz?' },
+                    { speaker: 'A', ar: 'أنا تركي.', tr: 'Ben Türküm.' },
+                    { speaker: 'B', ar: 'إلى اللقاء.', tr: 'Güle güle.' },
+                ],
+                mcq_quiz: [
+                    { q: 'ماذا تعني كلمة "Güle güle"؟', options: ['صباح الخير', 'إلى اللقاء', 'كيف حالك', 'شكراً'], answer: 1 },
+                    { q: 'اختر الترجمة الصحيحة لـ "ما اسمك؟" (رسمي)', options: ['Nasılsın?', 'Adınız ne?', 'Ne kadar?', 'Kimsin?'], answer: 1 },
+                    { q: 'أكمل الجملة: Ben Suriyeliyim, ya...', options: ['siz?', 'o?', 'ben?', 'sen?'], answer: 0 },
+                    { q: 'كلمة "Öğrenci" تعني:', options: ['سيارة', 'طبيب', 'طالب', 'مدرسة'], answer: 2 },
+                    { q: 'الرقم "Üç" هو:', options: ['اثنين', 'واحد', 'ثلاثة', 'أربعة'], answer: 2 }
+                ],
+                tf_quiz: [
+                    { q: 'كلمة "Kırmızı" تعني اللون الأحمر.', answer: true },
+                    { q: 'عبارة "İyi akşamlar" تستخدم في الصباح.', answer: false },
+                    { q: 'عبارة "Ben Türküm" تعني "أنا تركي".', answer: true },
+                    { q: 'الرقم "On" يعني عشرة.', answer: true },
+                    { q: 'كلمة "Anne" تعني الأم.', answer: true }
+                ]
+            },
+            'M2': {
+                title: 'الوحدة 2: العائلة والروتين',
+                keywords: [
+                    { tr: 'Anne', ar: 'أم' },
+                    { tr: 'Baba', ar: 'أب' },
+                    { tr: 'Kardeş', ar: 'أخ/أخت' },
+                    { tr: 'Okuyorum', ar: 'أنا أقرأ' },
+                    { tr: 'Pazar', ar: 'الأحد (يوم)' },
+                ],
+                realLifeTips: [
+                    { title: 'الأخوة الكبار', content: 'يستخدم الأتراك مصطلحات خاصة للأخوة الكبار: "Ağabey" للأخ الأكبر (يختصر لـ Abi) و "Abla" للأخت الكبرى. لا تستخدم فقط "Kardeş" للإشارة إليهم.' },
+                    { title: 'الروتين اليومي', content: 'الجمل التركية الروتينية غالباً ما تستخدم الزمن الحاضر (-yor) مثل "Gidiyorum" (أذهب)، "Okuyorum" (أقرأ). هذا هو زمن الإجراءات المستمرة والروتين.' },
+                ],
+                conversation: [
+                    { speaker: 'A', ar: 'ماذا تفعل يوم الأحد؟', tr: 'Pazar günü ne yapıyorsun?' },
+                    { speaker: 'B', ar: 'أذهب إلى السوق مع أمي وأبي.', tr: 'Annem ve babamla pazara gidiyorum.' },
+                    { speaker: 'A', ar: 'هل لديك أخوة؟', tr: 'Kardeşin var mı?' },
+                    { speaker: 'B', ar: 'نعم، لدي أخت كبيرة.', tr: 'Evet, bir ablam var.' },
+                    { speaker: 'A', ar: 'جيد جداً! عائلة جميلة.', tr: 'Çok güzel! Güzel bir aile.' },
+                ],
+                mcq_quiz: [
+                    { q: 'لاحقة الزمن الحاضر هي:', options: ['-di', '-acak', '-yor', '-miş'], answer: 2 },
+                    { q: 'ماذا تعني كلمة "Hızlı"?', options: ['بطيء', 'صغير', 'سريع', 'صعب'], answer: 2 },
+                    { q: 'كلمة "Ağabey" تعني:', options: ['الأخ الأكبر', 'الأخت الصغيرة', 'العم', 'الخال'], answer: 0 },
+                    { q: 'اختر الفعل الذي يعني "أنت تأتي":', options: ['Geliyorum', 'Geliyorsun', 'Geliyor', 'Gelecek'], answer: 1 },
+                    { q: 'كلمة "Pazartesi" تعني:', options: ['الأحد', 'الخميس', 'الاثنين', 'السبت'], answer: 2 }
+                ],
+                tf_quiz: [
+                    { q: 'كلمة "Kolay" تعني "صعب".', answer: false },
+                    { q: 'الزمن الحاضر يستخدم للتعبير عن الروتين اليومي.', answer: true },
+                    { q: 'كلمة "Kız kardeş" تعني الأخت.', answer: true },
+                    { q: 'يوم الجمعة هو "Pazar".', answer: false },
+                    { q: 'عبارة "Yavaşça konuşuyor" تعني "يتحدث ببطء".', answer: true }
+                ]
+            },
+            'M3': {
+                title: 'الوحدة 3: التسوق والطعام',
+                keywords: [
+                    { tr: 'Ekmek', ar: 'خبز' },
+                    { tr: 'Su', ar: 'ماء' },
+                    { tr: 'Ne kadar?', ar: 'كم السعر؟' },
+                    { tr: 'İndirim', ar: 'خصم' },
+                    { tr: 'Market', ar: 'ماركت/سوق' },
+                ],
+                realLifeTips: [
+                    { title: 'استخدام "Buyurun"', content: 'كلمة "Buyurun" (تفضل) تستخدم بكثرة في المتاجر. قد تعني "تفضل بالدخول"، "تفضل خذ هذا"، أو "ماذا تريد؟" حسب السياق.' },
+                    { title: 'الطلب بـ "Alabilir miyim?"', content: 'لتكون مهذباً عند الطلب، استخدم صيغة "alabilir miyim?" (هل يمكنني أن آخذ؟) بدلاً من "Almak istiyorum" (أريد أن آخذ) لجعل الجملة أكثر تهذيباً.' },
+                ],
+                conversation: [
+                    { speaker: 'A', ar: 'كم سعر الخبز والماء؟', tr: 'Ekmek ve su ne kadar?' },
+                    { speaker: 'B', ar: 'المجموع 25 ليرة.', tr: 'Hepsi yirmi beş Lira.' },
+                    { speaker: 'A', ar: 'هل هناك خصم؟', tr: 'İndirim var mı?' },
+                    { speaker: 'B', ar: 'اليوم لا يوجد خصم.', tr: 'Bugün indirim yok.' },
+                    { speaker: 'A', ar: 'حسناً، هل يمكنني أن آخذ بعض الجبنة أيضاً؟', tr: 'Tamam, biraz peynir de alabilir miyim?' },
+                    { speaker: 'B', ar: 'بالتأكيد، تفضل.', tr: 'Tabii, buyurun.' },
+                ],
+                mcq_quiz: [
+                    { q: 'ماذا تعني كلمة "Peynir"؟', options: ['خبز', 'حليب', 'جبنة', 'لحم'], answer: 2 },
+                    { q: 'الترجمة الصحيحة لـ "كم السعر؟" هي:', options: ['Nasılsın?', 'Ne kadar?', 'Neredesin?', 'Kimsin?'], answer: 1 },
+                    { q: 'كلمة "Sebze" تعني:', options: ['فاكهة', 'حلويات', 'خضار', 'مشروبات'], answer: 2 },
+                    { q: 'ماذا تعني كلمة "Buyurun" في سياق السوق؟', options: ['إلى اللقاء', 'تفضل', 'شكراً', 'أنا آسف'], answer: 1 },
+                    { q: 'الكلمة التركية لـ "صيدلية" هي:', options: ['Market', 'Postane', 'Eczane', 'Hastane'], answer: 2 }
+                ],
+                tf_quiz: [
+                    { q: 'كلمة "Çay" تعني "قهوة".', answer: false },
+                    { q: 'عبارة "Alabilir miyim?" تعني "هل يمكنني أن آخذ؟".', answer: true },
+                    { q: 'كلمة "Et" تعني اللحم.', answer: true },
+                    { q: 'كلمة "Postane" تعني "مستشفى".', answer: false },
+                    { q: 'السوق باللغة التركية هو "Pazar".', answer: true }
+                ]
+            },
+            'M4': {
+                title: 'الوحدة 4: الصحة والحالات الطارئة',
+                keywords: [
+                    { tr: 'Ağrım var', ar: 'لدي ألم' },
+                    { tr: 'Ateş', ar: 'حمى' },
+                    { tr: 'Doktor', ar: 'طبيب' },
+                    { tr: 'Hastane', ar: 'مستشفى' },
+                    { tr: 'Eczane', ar: 'صيدلية' },
+                    { tr: 'Geçmiş olsun', ar: 'أتمنى لك الشفاء' },
+                ],
+                realLifeTips: [
+                    { title: 'دعاء الشفاء "Geçmiş olsun"', content: 'هذه العبارة تعني "أتمنى أن يزول ما فات" أو "أتمنى لك الشفاء العاجل". هي الطريقة الأكثر شيوعاً للتعبير عن التعاطف مع شخص مريض أو يمر بأزمة.' },
+                    { title: 'وصف الأعراض', content: 'لوصف الأعراض، استخدم صيغة الملكية متبوعة بـ "var" (لدي) مثل "Baş ağrısı var" (لدي صداع) أو "Midem bulanıyor" (معدتي مضطربة).' },
+                ],
+                conversation: [
+                    { speaker: 'A', ar: 'أنا لست بخير اليوم، لدي صداع.', tr: 'Bugün iyi değilim, baş ağrım var.' },
+                    { speaker: 'B', ar: 'أتمنى لك الشفاء العاجل. هل زرت الطبيب؟', tr: 'Geçmiş olsun. Doktora gittiniz mi?' },
+                    { speaker: 'A', ar: 'نعم، ولكن ما زلت أشعر بالحمى.', tr: 'Evet, ama hala ateşim var.' },
+                    { speaker: 'B', ar: 'ربما تحتاج لبعض الدواء من الصيدلية.', tr: 'Belki eczaneden biraz ilaç almalısınız.' },
+                    { speaker: 'A', ar: 'شكراً جزيلاً على نصيحتك.', tr: 'Çok teşekkür ederim tavsiyeniz için.' },
+                ],
+                mcq_quiz: [
+                    { q: 'ماذا تعني عبارة "Baş ağrısı"؟', options: ['ألم الظهر', 'صداع', 'سعال', 'حمى'], answer: 1 },
+                    { q: 'الكلمة التركية لـ "صيدلية" هي:', options: ['Market', 'Postane', 'Eczane', 'Hastane'], answer: 2 },
+                    { q: 'عبارة "Geçmiş olsun" تعني:', options: ['أهلاً بك', 'تشرفت', 'صباح الخير', 'أتمنى لك الشفاء'], answer: 3 },
+                    { q: 'كلمة "Doktor" تعني:', options: ['طالب', 'طبيب', 'سائق', 'مدرس'], answer: 1 },
+                    { q: 'كلمة "Ateş" تعني:', options: ['برودة', 'تعب', 'حمى', 'ألم'], answer: 2 }
+                ],
+                tf_quiz: [
+                    { q: 'كلمة "İlaç" تعني "دواء".', answer: true },
+                    { q: 'عبارة "Neyiniz var?" تستخدم للسؤال عن الأعراض.', answer: true },
+                    { q: 'كلمة "Ağrı" تعني "طبيب".', answer: false },
+                    { q: 'عبارة "Geçmiş olsun" تقال عند الوداع العادي.', answer: false },
+                    { q: 'كلمة "Hastane" تعني "مستشفى".', answer: true }
+                ]
+            },
+            'M5': {
+                title: 'الوحدة 5: الاتجاهات والتنقل',
+                keywords: [
+                    { tr: 'Düz gidin', ar: 'اذهب مباشرة' },
+                    { tr: 'Sağa dönün', ar: 'انعطف يميناً' },
+                    { tr: 'Sola dönün', ar: 'انعطف يساراً' },
+                    { tr: 'Nerede?', ar: 'أين؟' },
+                    { tr: 'Yakın mı?', ar: 'هل هو قريب؟' },
+                    { tr: 'Cadde', ar: 'شارع/جادة' },
+                ],
+                realLifeTips: [
+                    { title: 'طلب الإذن "Affedersiniz"', content: 'ابدأ دائماً بـ "Affedersiniz" (عفواً) قبل سؤال أي شخص عن الاتجاهات أو أي مساعدة لـإظهار الاحترام والتهذيب.' },
+                    { title: 'أسماء الأماكن', content: 'لتحديد موقع مكان، أضف لاحقة الموقع (-de / -da / -te / -ta) إلى اسم المكان. مثال: "Market nerede?" (أين الماركت؟).' },
+                ],
+                conversation: [
+                    { speaker: 'A', ar: 'عفواً، أين أقرب موقف حافلات؟', tr: 'Affedersiniz, en yakın otobüs durağı nerede?' },
+                    { speaker: 'B', ar: 'اذهب مباشرة، ثم انعطف يساراً عند الإشارة.', tr: 'Düz gidin, sonra ışıklardan sola dönün.' },
+                    { speaker: 'A', ar: 'هل هو قريب من هنا؟', tr: 'Buradan yakın mı?' },
+                    { speaker: 'B', ar: 'نعم، إنه قريب جداً. حوالي خمس دقائق مشياً.', tr: 'Evet, çok yakın. Yaklaşık beş dakika yürüyerek.' },
+                    { speaker: 'A', ar: 'شكراً جزيلاً للمساعدة.', tr: 'Yardımınız için çok teşekkürler.' },
+                ],
+                mcq_quiz: [
+                    { q: 'الترجمة الصحيحة لـ "انعطف يميناً" هي:', options: ['Sola dönün', 'Sağa dönün', 'Düz gidin', 'Burada durun'], answer: 1 },
+                    { q: 'ماذا تعني كلمة "Cadde"؟', options: ['طريق سريع', 'زقاق', 'شارع/جادة', 'منزل'], answer: 2 },
+                    { q: 'ماذا تعني كلمة "Uzak"?', options: ['قريب', 'سريع', 'بعيد', 'سهل'], answer: 2 },
+                    { q: 'كلمة "Hemen" تعني:', options: ['أحياناً', 'نادراً', 'بعد قليل', 'فوراً/حالاً'], answer: 3 },
+                    { q: 'ما هو "Otobüs durağı"؟', options: ['محطة قطار', 'موقف حافلات', 'مطار', 'فندق'], answer: 1 }
+                ],
+                tf_quiz: [
+                    { q: 'عبارة "Sola dönün" تعني "انعطف يساراً".', answer: true },
+                    { q: 'عبارة "Affedersiniz" تعني "أنا آسف".', answer: true },
+                    { q: 'كلمة "Kavşak" تعني "جسر".', answer: false },
+                    { q: 'كلمة "Doğru" تعني "مستقيم/صحيح".', answer: true },
+                    { q: 'المتحف بالتركية هو "Müze".', answer: true }
+                ]
+            }
+        };
+
+        // === TTS UTILITIES & API CALL (Core Audio Logic) ===
+        const TTS_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=";
+        const VOICE_NAME = "Kore"; // صوت رسمي وواضح
+
+        function base64ToArrayBuffer(base64) {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        // تحويل PCM (raw audio) إلى تنسيق WAV قابل للتشغيل
+        function pcmToWav(pcmData, sampleRate) {
+            const buffer = new ArrayBuffer(44 + pcmData.byteLength);
+            const view = new DataView(buffer);
+            let offset = 0;
+
+            function writeString(s) {
+                for (let i = 0; i < s.length; i++) {
+                    view.setUint8(offset + i, s.charCodeAt(i));
+                }
+                offset += s.length;
+            }
+
+            function writeUint32(i) {
+                view.setUint32(offset, i, true); 
+                offset += 4;
+            }
+
+            function writeUint16(i) {
+                view.setUint16(offset, i, true); 
+                offset += 2;
+            }
+
+            // RIFF header
+            writeString('RIFF');
+            writeUint32(36 + pcmData.byteLength); 
+            writeString('WAVE');
+
+            // fmt chunk
+            writeString('fmt ');
+            writeUint32(16);
+            writeUint16(1); 
+            writeUint16(1); 
+            writeUint32(sampleRate);
+            writeUint32(sampleRate * 2); 
+            writeUint16(2); 
+            writeUint16(16); 
+
+            // data chunk
+            writeString('data');
+            writeUint32(pcmData.byteLength); 
+
+            // write the PCM data
+            const pcmBytes = new Uint8Array(pcmData);
+            for (let i = 0; i < pcmBytes.length; i++) {
+                view.setUint8(offset + i, pcmBytes[i]);
+            }
+
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        async function fetchWithRetry(url, options, maxRetries = 3) {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.ok) return response;
+                    
+                    if (i < maxRetries - 1) {
+                        const delay = Math.pow(2, i) * 1000 + Math.random() * 500;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        continue;
+                    }
+                    throw new Error(`API call failed with status: ${response.status}`);
+                } catch (error) {
+                    if (i === maxRetries - 1) throw error;
+                    const delay = Math.pow(2, i) * 1000 + Math.random() * 500;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
+
+        async function playAudio(text) {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.classList.remove('hidden');
+
+            const payload = {
+                contents: [{
+                    parts: [{ text: text }]
+                }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: { voiceName: VOICE_NAME }
+                        }
+                    }
+                },
+                model: "gemini-2.5-flash-preview-tts"
+            };
+            const apiKey = ""; 
+
+            try {
+                const response = await fetchWithRetry(TTS_API_URL + apiKey, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const candidate = result?.candidates?.[0];
+                const part = candidate?.content?.parts?.find(p => p.inlineData && p.inlineData.mimeType.startsWith("audio/"));
+
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType;
+
+                if (!audioData || !mimeType) {
+                    const reason = candidate?.finishReason || "UNKNOWN";
+                    console.error("Full API result:", result);
+                    throw new Error(`فشل توليد الصوت. السبب: ${reason}. حاول بعبارة أخرى.`);
+                }
+
+                const rateMatch = mimeType.match(/rate=(\d+)/);
+                const sampleRate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
+
+                const pcmBuffer = base64ToArrayBuffer(audioData);
+                const wavBlob = pcmToWav(pcmBuffer, sampleRate);
+                const audioUrl = URL.createObjectURL(wavBlob);
+                
+                const audio = new Audio(audioUrl);
+                audio.play();
+
+            } catch (error) {
+                console.error("TTS Error:", error);
+                // استخدام رسالة بسيطة لعدم استخدام alert()
+                const errorMessage = "عفواً، حدث خطأ أثناء تشغيل الصوت. يرجى التحقق من النص والمحاولة مرة أخرى.";
+                const messageEl = document.getElementById('messageBox');
+                if (messageEl) {
+                    messageEl.innerHTML = `<p class="text-red-700">${errorMessage}</p>`;
+                    messageEl.classList.remove('hidden');
+                    setTimeout(() => messageEl.classList.add('hidden'), 5000);
+                } else {
+                    alert(errorMessage);
+                }
+            } finally {
+                loadingOverlay.classList.add('hidden');
+            }
+        }
+
+        // === إدارة حالة التطبيق ===
+        let currentModuleId = 'home';
+        let activeQuizType = 'mcq';
+        let currentQuizIndex = 0;
+        let currentScore = 0;
+
+        const contentArea = document.getElementById('content-area');
+        const navButtons = document.querySelectorAll('.nav-btn');
+
+        // وظيفة لعرض الأقسام
+        function showModule(moduleId) {
+            currentModuleId = moduleId;
+
+            // تحديث أزرار التنقل الجانبي
+            navButtons.forEach(btn => btn.classList.remove('nav-active', 'bg-violet-100'));
+            const activeBtn = document.querySelector(`[onclick="showModule('${moduleId}')"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('nav-active', 'bg-violet-100');
+            }
+
+            contentArea.innerHTML = '';
+            
+            if (moduleId === 'home') {
+                renderHome();
+            } else if (modules[moduleId]) {
+                renderModuleView(moduleId);
+            }
+        }
+
+        // === عرض صفحة البداية ===
+        function renderHome() {
+            contentArea.innerHTML = `
+                <div class="p-8 text-center bg-white rounded-xl">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4">مرحباً بك في منهج "التركية للحياة الواقعية"!</h2>
+                    <p class="text-gray-600 mb-8 max-w-xl mx-auto">هذا التطبيق يركز على التدريب العملي والتسلية. اختر وحدة من القائمة للبدء في: <strong class="text-violet-600">المفردات الصوتية، المحادثات البسيطة، نصائح الاستخدام الواقعي، واختبارات متنوعة.</strong></p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+                        ${Object.keys(modules).map(key => `
+                            <div onclick="showModule('${key}')" class="card-hover bg-violet-50 p-5 rounded-xl shadow-md border-b-4 border-indigo-400 cursor-pointer transition duration-300 hover:bg-violet-100">
+                                <h3 class="text-xl font-bold text-violet-700">${modules[key].title}</h3>
+                                <p class="text-sm text-gray-600 mt-2">محادثة + 10 أسئلة تدريبية</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // === عرض محتوى الوحدة (Module View) ===
+        function renderModuleView(moduleId) {
+            const module = modules[moduleId];
+            contentArea.innerHTML = `
+                <button onclick="showModule('home')" class="text-indigo-600 hover:text-indigo-800 flex items-center mb-4 text-sm font-semibold transition duration-150">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 ml-1 transform rotate-180">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                    </svg>
+                    العودة للرئيسية
+                </button>
+                <h2 class="text-3xl font-bold text-indigo-800 mb-6 border-b-2 border-violet-200 pb-2">${module.title}</h2>
+                
+                <!-- منطقة تفاصيل الدرس والأقسام الثلاثة -->
+                <div id="module-tabs-content" class="p-0 bg-white rounded-xl shadow-lg border border-violet-100">
+                    <!-- التبويبات الثلاثة -->
+                    <div id="module-tabs" class="flex flex-wrap justify-start border-b border-gray-200 bg-gray-50 p-2">
+                        <button id="tab-learn-btn" onclick="showTabContent('learn')" class="tab-btn p-3 text-lg text-gray-700 ml-2 tab-active">التعلم والمفردات</button>
+                        <button id="tab-conversation-btn" onclick="showTabContent('conversation')" class="tab-btn p-3 text-lg text-gray-700 ml-2">المحادثة العامة</button>
+                        <button id="tab-quiz-btn" onclick="showTabContent('quiz')" class="tab-btn p-3 text-lg text-gray-700">الاختبار والتدريب</button>
+                    </div>
+                    <!-- محتوى التبويب -->
+                    <div id="tab-content-area" class="p-6">
+                        <!-- محتوى التبويب يظهر هنا -->
+                    </div>
+                </div>
+                <!-- مسج بوكس لتنبيهات TTS -->
+                <div id="messageBox" class="mt-4 p-3 hidden rounded-lg bg-red-100 border border-red-300" role="alert"></div>
+
+            `;
+            // عرض التبويب الأول تلقائياً
+            showTabContent('learn');
+        }
+
+        // === عرض محتوى التبويب ===
+        function showTabContent(tabType) {
+            const module = modules[currentModuleId];
+            const contentArea = document.getElementById('tab-content-area');
+            const tabButtons = document.querySelectorAll('#module-tabs .tab-btn');
+            
+            // تحديث حالة الأزرار
+            tabButtons.forEach(btn => btn.classList.remove('tab-active'));
+            document.getElementById(`tab-${tabType}-btn`).classList.add('tab-active');
+
+            contentArea.innerHTML = '';
+            
+            if (tabType === 'learn') {
+                contentArea.innerHTML = `
+                    <h3 class="text-2xl font-bold text-indigo-700 mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 ml-2 text-violet-500">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-4.406 0-8 3.594-8 8s3.594 8 8 8c1.782 0 3.447-.563 4.885-1.517m2.368-2.368A6.002 6.002 0 0 0 18.75 12c.003-.321.036-.639.088-.952M21 12a9 9 0 0 1-9 9" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25H9.375a3 3 0 0 1-3-3V8.25a3 3 0 0 1 3-3h6.375a3 3 0 0 1 3 3v5.25a3 3 0 0 1-3 3Z" />
+                        </svg>
+                        أهم المفردات (اضغط للاستماع)
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                        ${module.keywords.map(item => `
+                            <div class="flex items-center justify-between p-4 bg-white rounded-xl shadow-lg border border-violet-100 transition duration-200 hover:border-violet-300">
+                                <span class="text-lg font-semibold text-gray-700">${item.ar}</span>
+                                <div class="flex items-center space-x-3" dir="ltr">
+                                    <span class="turkish-text text-xl">${item.tr}</span>
+                                    <button onclick="playAudio('${item.tr}')" class="tts-icon text-violet-600 hover:text-violet-800 focus:outline-none" title="الاستماع للنطق">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+                                            <path d="M13.5 10.5a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1-.75-.75v-3Z" />
+                                            <path d="M11.332 10.187a.75.75 0 0 1 0 1.626L7.143 14.18c-.46.336-1.077.062-1.077-.596V9.416c0-.658.617-.932 1.077-.596l4.189 2.193Z" />
+                                            <path fill-rule="evenodd" d="M18.665 2c.243 0 .445.201.445.447V21.55c0 .246-.202.448-.445.448h-1.5c-.243 0-.445-.201-.445-.447v-3.89l-4.153 2.176A1.554 1.554 0 0 1 10.5 21.5V3.992c0-.785.864-1.282 1.55-.943l4.155 2.176v-3.89c0-.246.202-.448.445-.448h1.5ZM17.165 4.79v14.42l-3.344-1.758c-.287-.152-.46-.464-.46-.798V6.347c0-.334.173-.646.46-.798l3.344-1.758Z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- قسم نصائح الحياة الواقعية (New Section) -->
+                    <h3 class="text-2xl font-bold text-red-600 mb-4 flex items-center mt-8 border-t pt-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 ml-2 text-red-500">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.018 3.377 1.628 3.377h14.81c1.61 0 2.494-1.877 1.628-3.377l-7.41-12.83a2.25 2.25 0 0 0-3.837 0l-7.41 12.83Z" />
+                        </svg>
+                        نصائح للاستخدام الواقعي والثقافة
+                    </h3>
+                    <div class="space-y-4">
+                        ${module.realLifeTips.map(tip => `
+                            <div class="bg-red-50 p-4 rounded-xl shadow-sm border border-red-300">
+                                <h4 class="text-lg font-bold text-red-700 mb-1">${tip.title}</h4>
+                                <p class="text-gray-700">${tip.content}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (tabType === 'conversation') {
+                contentArea.innerHTML = `
+                    <h3 class="text-2xl font-bold text-indigo-700 mb-4">محادثة عامة: ${module.title}</h3>
+                    <p class="text-gray-600 mb-4">استمع وردد الجمل لتقوية اللفظ والمخزون اللغوي.</p>
+                    <div class="bg-gray-50 p-4 rounded-xl shadow space-y-4 border border-violet-200">
+                        ${module.conversation.map(item => `
+                            <div class="flex flex-col ${item.speaker === 'A' ? 'items-end' : 'items-start'}">
+                                <span class="font-bold text-sm text-gray-500 mb-1">${item.speaker}: ${item.ar}</span>
+                                <div class="flex items-center space-x-2 p-3 rounded-lg ${item.speaker === 'A' ? 'bg-violet-100 shadow-md' : 'bg-white shadow-lg border border-gray-200'} max-w-lg" dir="ltr">
+                                    <button onclick="playAudio('${item.tr}')" class="tts-icon text-violet-600 hover:text-violet-800 focus:outline-none" title="الاستماع للنطق">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                                            <path fill-rule="evenodd" d="M3 9.75a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1-.75-.75v-4.5Zm6 0a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1-.75-.75v-4.5Zm6 0a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1-.75-.75v-4.5Z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                    <span class="turkish-text text-lg">${item.tr}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (tabType === 'quiz') {
+                renderQuizSetup();
+            }
+        }
+        
+        // === إدارة الاختبار والتدريب (Quiz Logic) ===
+        function renderQuizSetup() {
+            currentScore = 0;
+            currentQuizIndex = 0;
+            activeQuizType = 'mcq';
+
+            contentArea.innerHTML = `
+                <h3 class="text-2xl font-bold text-yellow-700 mb-4">${modules[currentModuleId].title} - الاختبار والتدريب</h3>
+                <div class="flex space-x-4 mb-6">
+                    <button id="quiz-type-mcq" onclick="setQuizType('mcq')" class="py-2 px-4 rounded-lg font-bold text-white bg-violet-600 hover:bg-violet-700 transition duration-150">اختيار من متعدد (5 أسئلة)</button>
+                    <button id="quiz-type-tf" onclick="setQuizType('tf')" class="py-2 px-4 rounded-lg font-bold text-violet-600 border border-violet-600 bg-white hover:bg-violet-50 transition duration-150">صح و خطأ (5 أسئلة)</button>
+                </div>
+
+                <div id="quiz-section-content">
+                    <!-- محتوى الاختبار يظهر هنا -->
+                </div>
+            `;
+            setQuizType('mcq'); // البدء باختيار من متعدد تلقائياً
+        }
+
+        function setQuizType(type) {
+            activeQuizType = type;
+            currentScore = 0;
+            currentQuizIndex = 0;
+            
+            // تحديث أزرار نوع الاختبار
+            document.getElementById('quiz-type-mcq').classList.remove('bg-violet-600', 'text-white', 'border', 'border-violet-600', 'bg-white', 'hover:bg-violet-50');
+            document.getElementById('quiz-type-tf').classList.remove('bg-violet-600', 'text-white', 'border', 'border-violet-600', 'bg-white', 'hover:bg-violet-50');
+            
+            document.getElementById(`quiz-type-${type}`).classList.add('bg-violet-600', 'text-white');
+            document.getElementById(`quiz-type-${type === 'mcq' ? 'tf' : 'mcq'}`).classList.add('text-violet-600', 'border', 'border-violet-600', 'bg-white', 'hover:bg-violet-50');
+
+
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion() {
+            const module = modules[currentModuleId];
+            const quizSet = activeQuizType === 'mcq' ? module.mcq_quiz : module.tf_quiz;
+            const totalQuestions = quizSet.length;
+            const currentQ = quizSet[currentQuizIndex];
+            const quizContentEl = document.getElementById('quiz-section-content');
+
+            if (currentQuizIndex >= totalQuestions) {
+                renderQuizResults(totalQuestions);
+                return;
+            }
+
+            quizContentEl.innerHTML = `
+                <div class="bg-yellow-50 p-6 rounded-xl shadow-inner border border-yellow-300">
+                    <p id="q-status" class="text-center text-xl font-semibold mb-6 text-gray-700">السؤال ${currentQuizIndex + 1} من ${totalQuestions} (${activeQuizType === 'mcq' ? 'اختيار من متعدد' : 'صح و خطأ'})</p>
+
+                    <div id="q-card" class="bg-white p-6 rounded-lg shadow-md">
+                        <p id="q-text" class="text-2xl font-bold mb-5 text-gray-800">${currentQ.q}</p>
+                        <div id="q-options-container" class="space-y-4">
+                            ${activeQuizType === 'mcq' ? currentQ.options.map((option, i) => `
+                                <button onclick="checkAnswer(${i})" data-index="${i}" class="option-button w-full text-right bg-white border border-gray-300 p-4 rounded-lg shadow-sm font-medium text-lg transition duration-150">${option}</button>
+                            `).join('') : `
+                                <button onclick="checkAnswer(true)" data-answer="true" class="option-button w-full text-right bg-white border border-gray-300 p-4 rounded-lg shadow-sm font-medium text-xl transition duration-150">صحيح (Doğru)</button>
+                                <button onclick="checkAnswer(false)" data-answer="false" class="option-button w-full text-right bg-white border border-gray-300 p-4 rounded-lg shadow-sm font-medium text-xl transition duration-150">خطأ (Yanlış)</button>
+                            `}
+                        </div>
+                        <p id="q-feedback" class="mt-4 text-center font-bold text-lg hidden"></p>
+                    </div>
+                    
+                    <button id="q-next-btn" onclick="nextQuestion()" class="w-full mt-4 bg-violet-600 text-white py-3 rounded-lg text-xl font-bold hover:bg-violet-700 transition duration-200 hidden">السؤال التالي</button>
+                </div>
+            `;
+        }
+
+        function checkAnswer(selectedIndexOrBoolean) {
+            const module = modules[currentModuleId];
+            const quizSet = activeQuizType === 'mcq' ? module.mcq_quiz : module.tf_quiz;
+            const currentQ = quizSet[currentQuizIndex];
+            
+            const isCorrect = activeQuizType === 'mcq' 
+                ? (selectedIndexOrBoolean === currentQ.answer)
+                : (selectedIndexOrBoolean === currentQ.answer);
+
+            const optionsContainer = document.getElementById('q-options-container');
+            const feedbackEl = document.getElementById('q-feedback');
+            const nextBtn = document.getElementById('q-next-btn');
+            
+            // تعطيل جميع الأزرار
+            optionsContainer.querySelectorAll('.option-button').forEach(btn => btn.disabled = true);
+            
+            // إظهار التغذية الراجعة
+            if (isCorrect) {
+                currentScore++;
+                feedbackEl.textContent = 'إجابة صحيحة! ممتاز.';
+                feedbackEl.classList.remove('text-red-600', 'hidden');
+                feedbackEl.classList.add('text-green-600');
+                
+                if (activeQuizType === 'mcq') {
+                    optionsContainer.querySelector(`button[data-index="${selectedIndexOrBoolean}"]`).classList.add('correct');
+                } else {
+                    optionsContainer.querySelector(`button[data-answer="${selectedIndexOrBoolean}"]`).classList.add('correct');
+                }
+            } else {
+                feedbackEl.textContent = 'إجابة خاطئة. حاول مجدداً في السؤال التالي.';
+                feedbackEl.classList.remove('text-green-600', 'hidden');
+                feedbackEl.classList.add('text-red-600');
+                
+                if (activeQuizType === 'mcq') {
+                    optionsContainer.querySelector(`button[data-index="${selectedIndexOrBoolean}"]`).classList.add('wrong');
+                    optionsContainer.querySelector(`button[data-index="${currentQ.answer}"]`).classList.add('correct');
+                } else {
+                    optionsContainer.querySelector(`button[data-answer="${selectedIndexOrBoolean}"]`).classList.add('wrong');
+                    optionsContainer.querySelector(`button[data-answer="${currentQ.answer}"]`).classList.add('correct');
+                }
+            }
+
+            nextBtn.classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQuizIndex++;
+            renderQuizQuestion();
+        }
+
+        function renderQuizResults(totalQuestions) {
+            const quizContentEl = document.getElementById('quiz-section-content');
+            quizContentEl.innerHTML = `
+                <div class="p-8 text-center bg-violet-50 rounded-xl shadow-xl border-4 border-violet-300">
+                    <span class="text-4xl font-extrabولد text-violet-600 block mb-3">انتهى التدريب!</span>
+                    <span class="text-2xl block mb-4">نتيجتك في اختبار ${activeQuizType === 'mcq' ? 'الاختيار المتعدد' : 'الصح والخطأ'}: <span class="text-yellow-600">${currentScore}</span> من ${totalQuestions}</span>
+                    <button onclick="setQuizType(activeQuizType)" class="bg-green-500 text-white py-2 px-6 rounded-lg hover:bg-green-600 font-medium mt-4 transition duration-150">إعادة الاختبار</button>
+                    ${activeQuizType === 'mcq' ? 
+                        `<button onclick="setQuizType('tf')" class="bg-indigo-500 text-white py-2 px-6 rounded-lg hover:bg-indigo-600 font-medium mt-4 mr-2 transition duration-150">بدء اختبار الصح والخطأ</button>` : 
+                        `<button onclick="setQuizType('mcq')" class="bg-indigo-500 text-white py-2 px-6 rounded-lg hover:bg-indigo-600 font-medium mt-4 mr-2 transition duration-150">بدء اختبار الاختيار المتعدد</button>`
+                    }
+                </div>
+            `;
+        }
+
+
+        // === تهيئة التطبيق عند التحميل ===
+        document.addEventListener('DOMContentLoaded', () => {
+            showModule('home');
+        });
+    </script>
+</body>
+</html>
