@@ -1,10 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>التركية للحياة الواقعية والتدريب الصوتي</title>
-    <!-- تضمين Tailwind CSS -->
+    <!-- تضمين Tailwind CSS من CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* خط متناسق مع اللغة العربية ومناسب للواجهات الحديثة */
@@ -65,7 +66,7 @@
 </head>
 <body class="min-h-screen p-4 md:p-8">
 
-    <!-- رسالة التحميل الصوتي -->
+    <!-- رسالة التحميل الصوتي - تظهر عند محاولة توليد الصوت -->
     <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
         <div class="bg-white p-6 rounded-xl shadow-2xl flex items-center border-t-4 border-violet-600">
             <svg class="animate-spin -ml-1 mr-3 h-6 w-6 text-violet-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -306,9 +307,11 @@
         };
 
         // === TTS UTILITIES & API CALL (Core Audio Logic) ===
+        // يتم استخدام gemini-2.5-flash-preview-tts لتحويل النص التركي إلى صوت
         const TTS_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=";
-        const VOICE_NAME = "Kore"; // صوت رسمي وواضح
+        const VOICE_NAME = "Kore"; // صوت رسمي وواضح للنطق التركي
 
+        // وظيفة تحويل Base64 إلى ArrayBuffer
         function base64ToArrayBuffer(base64) {
             const binaryString = atob(base64);
             const len = binaryString.length;
@@ -319,7 +322,7 @@
             return bytes.buffer;
         }
 
-        // تحويل PCM (raw audio) إلى تنسيق WAV قابل للتشغيل
+        // تحويل PCM (raw audio) إلى تنسيق WAV قابل للتشغيل (ضروري لأن API يعيد PCM)
         function pcmToWav(pcmData, sampleRate) {
             const buffer = new ArrayBuffer(44 + pcmData.byteLength);
             const view = new DataView(buffer);
@@ -350,12 +353,12 @@
             // fmt chunk
             writeString('fmt ');
             writeUint32(16);
-            writeUint16(1); 
-            writeUint16(1); 
+            writeUint16(1); // Audio format 1 (PCM)
+            writeUint16(1); // Channels (Mono)
             writeUint32(sampleRate);
-            writeUint32(sampleRate * 2); 
-            writeUint16(2); 
-            writeUint16(16); 
+            writeUint32(sampleRate * 2); // Byte rate (SampleRate * Channels * BitsPerSample/8)
+            writeUint16(2); // Block align
+            writeUint16(16); // Bits per sample
 
             // data chunk
             writeString('data');
@@ -370,6 +373,7 @@
             return new Blob([buffer], { type: 'audio/wav' });
         }
 
+        // آلية محاولة إعادة الاتصال (Exponential Backoff) لضمان استقرار API
         async function fetchWithRetry(url, options, maxRetries = 3) {
             for (let i = 0; i < maxRetries; i++) {
                 try {
@@ -390,6 +394,7 @@
             }
         }
 
+        // الوظيفة الرئيسية لتشغيل الصوت التركي
         async function playAudio(text) {
             const loadingOverlay = document.getElementById('loading-overlay');
             loadingOverlay.classList.remove('hidden');
@@ -408,7 +413,7 @@
                 },
                 model: "gemini-2.5-flash-preview-tts"
             };
-            const apiKey = ""; 
+            const apiKey = ""; // API Key is typically provided by the hosting environment
 
             try {
                 const response = await fetchWithRetry(TTS_API_URL + apiKey, {
@@ -430,11 +435,13 @@
                     throw new Error(`فشل توليد الصوت. السبب: ${reason}. حاول بعبارة أخرى.`);
                 }
 
+                // استخلاص معدل العينة من الـ mimeType
                 const rateMatch = mimeType.match(/rate=(\d+)/);
                 const sampleRate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
 
                 const pcmBuffer = base64ToArrayBuffer(audioData);
-                const wavBlob = pcmToWav(pcmBuffer, sampleRate);
+                const pcm16 = new Int16Array(pcmBuffer); // البيانات الخام هي PCM16
+                const wavBlob = pcmToWav(pcm16, sampleRate);
                 const audioUrl = URL.createObjectURL(wavBlob);
                 
                 const audio = new Audio(audioUrl);
@@ -442,22 +449,20 @@
 
             } catch (error) {
                 console.error("TTS Error:", error);
-                // استخدام رسالة بسيطة لعدم استخدام alert()
+                // استخدام رسالة بسيطة تظهر في مسج بوكس بدلاً من alert()
                 const errorMessage = "عفواً، حدث خطأ أثناء تشغيل الصوت. يرجى التحقق من النص والمحاولة مرة أخرى.";
                 const messageEl = document.getElementById('messageBox');
                 if (messageEl) {
                     messageEl.innerHTML = `<p class="text-red-700">${errorMessage}</p>`;
                     messageEl.classList.remove('hidden');
                     setTimeout(() => messageEl.classList.add('hidden'), 5000);
-                } else {
-                    alert(errorMessage);
                 }
             } finally {
                 loadingOverlay.classList.add('hidden');
             }
         }
 
-        // === إدارة حالة التطبيق ===
+        // === إدارة حالة التطبيق (Module, Quiz, UI Logic) ===
         let currentModuleId = 'home';
         let activeQuizType = 'mcq';
         let currentQuizIndex = 0;
@@ -577,7 +582,7 @@
                         `).join('')}
                     </div>
 
-                    <!-- قسم نصائح الحياة الواقعية (New Section) -->
+                    <!-- قسم نصائح الحياة الواقعية -->
                     <h3 class="text-2xl font-bold text-red-600 mb-4 flex items-center mt-8 border-t pt-4">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 ml-2 text-red-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.018 3.377 1.628 3.377h14.81c1.61 0 2.494-1.877 1.628-3.377l-7.41-12.83a2.25 2.25 0 0 0-3.837 0l-7.41 12.83Z" />
